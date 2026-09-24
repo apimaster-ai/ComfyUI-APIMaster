@@ -15,4 +15,4 @@ Documentation = "https://apimaster.ai/docs/api/images"
 [tool.comfy]
 PublisherId = "apimaster"
 DisplayName = "ComfyUI-APIMaster"
-Icon = "https://apimaster.ai/favicon.ico"
+Icon = "https://apimaster.ai/apimaster-favicon.png"
