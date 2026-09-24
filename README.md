@@ -87,7 +87,7 @@ Model catalogs change. Drop an `APIMaster List Models` node into any workflow, s
 console. Or from a terminal:
 
 ```bash
-npx apimaster-cli models --kind image
+npx @apimaster/cli models --kind image
 ```
 
 ## Use it with another provider
