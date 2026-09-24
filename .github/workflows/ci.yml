@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.9', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compile
+        run: python -m compileall -q apimaster __init__.py
+      - name: Tests (no network, no key)
+        run: python -m unittest discover -s tests -v
+      - name: Validate the example workflows
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          for path in pathlib.Path("example_workflows").glob("*.json"):
+              data = json.loads(path.read_text(encoding="utf-8"))
+              assert data["nodes"], f"{path} has no nodes"
+              ids = {n["id"] for n in data["nodes"]}
+              for link in data["links"]:
+                  assert link[1] in ids and link[3] in ids, f"{path} link {link} points at a missing node"
+              print(f"{path} ok: {len(data['nodes'])} nodes, {len(data['links'])} links")
+          PY

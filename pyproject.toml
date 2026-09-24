@@ -1,0 +1,18 @@
+[project]
+name = "comfyui-apimaster"
+description = "ComfyUI nodes for image and video generation through APIMaster and other OpenAI-compatible gateways. No extra Python dependencies."
+version = "0.1.0"
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["comfyui", "apimaster", "image-generation", "video-generation", "sora", "gpt-image"]
+
+[project.urls]
+Repository = "https://github.com/apimaster-ai/ComfyUI-APIMaster"
+Documentation = "https://apimaster.ai/docs/api/images"
+
+[tool.comfy]
+PublisherId = "apimaster"
+DisplayName = "ComfyUI-APIMaster"
+Icon = "https://apimaster.ai/favicon.ico"

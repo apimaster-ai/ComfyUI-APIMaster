@@ -1,0 +1,80 @@
+{
+  "last_node_id": 3,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "APIMasterConfig",
+      "pos": [40, 120],
+      "size": [380, 82],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "config",
+          "type": "APIMASTER_CONFIG",
+          "links": [1],
+          "slot_index": 0
+        }
+      ],
+      "properties": { "Node name for S&R": "APIMasterConfig" },
+      "widgets_values": ["https://apimaster.ai/v1", ""]
+    },
+    {
+      "id": 2,
+      "type": "APIMasterTextToImage",
+      "pos": [470, 120],
+      "size": [420, 260],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        { "name": "config", "type": "APIMASTER_CONFIG", "link": 1 }
+      ],
+      "outputs": [
+        { "name": "images", "type": "IMAGE", "links": [2], "slot_index": 0 },
+        { "name": "urls", "type": "STRING", "links": null, "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "APIMasterTextToImage" },
+      "widgets_values": [
+        "a corgi astronaut standing on the moon, cinematic lighting, 35mm",
+        "gpt-image-2",
+        "16:9",
+        "1k",
+        1,
+        "sync",
+        ""
+      ]
+    },
+    {
+      "id": 3,
+      "type": "PreviewImage",
+      "pos": [940, 120],
+      "size": [420, 340],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [{ "name": "images", "type": "IMAGE", "link": 2 }],
+      "outputs": [],
+      "properties": { "Node name for S&R": "PreviewImage" }
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "APIMASTER_CONFIG"],
+    [2, 2, 0, 3, 0, "IMAGE"]
+  ],
+  "groups": [
+    {
+      "title": "APIMaster text to image — set APIMASTER_API_KEY before starting ComfyUI",
+      "bounding": [20, 40, 1360, 450],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

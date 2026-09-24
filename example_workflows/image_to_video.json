@@ -1,0 +1,93 @@
+{
+  "last_node_id": 4,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "APIMasterConfig",
+      "pos": [40, 120],
+      "size": [380, 82],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "config", "type": "APIMASTER_CONFIG", "links": [1], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "APIMasterConfig" },
+      "widgets_values": ["https://apimaster.ai/v1", ""]
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [40, 260],
+      "size": [340, 314],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [2], "slot_index": 0 },
+        { "name": "MASK", "type": "MASK", "links": null, "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "LoadImage" },
+      "widgets_values": ["example.png", "image"]
+    },
+    {
+      "id": 3,
+      "type": "APIMasterVideo",
+      "pos": [470, 120],
+      "size": [430, 300],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        { "name": "config", "type": "APIMASTER_CONFIG", "link": 1 },
+        { "name": "reference_image", "type": "IMAGE", "link": 2 }
+      ],
+      "outputs": [
+        { "name": "video_path", "type": "STRING", "links": [3], "slot_index": 0 },
+        { "name": "task_id", "type": "STRING", "links": null, "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "APIMasterVideo" },
+      "widgets_values": [
+        "slow push-in, hair moving in the breeze, shallow depth of field",
+        "sora-2",
+        8,
+        "720p",
+        "9:16",
+        "apimaster",
+        ""
+      ]
+    },
+    {
+      "id": 4,
+      "type": "PreviewAny",
+      "pos": [950, 120],
+      "size": [360, 110],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [{ "name": "source", "type": "*", "link": 3 }],
+      "outputs": [],
+      "properties": { "Node name for S&R": "PreviewAny" }
+    }
+  ],
+  "links": [
+    [1, 1, 0, 3, 0, "APIMASTER_CONFIG"],
+    [2, 2, 0, 3, 1, "IMAGE"],
+    [3, 3, 0, 4, 0, "STRING"]
+  ],
+  "groups": [
+    {
+      "title": "Image to video — a portrait reference needs aspect_ratio 9:16 set explicitly",
+      "bounding": [20, 40, 1300, 560],
+      "color": "#8a4f7d",
+      "font_size": 22,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

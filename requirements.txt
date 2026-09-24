@@ -1,0 +1,5 @@
+# Intentionally empty.
+#
+# These nodes use only the Python standard library plus the torch / numpy / Pillow
+# that ComfyUI already ships. Pinning our own HTTP stack is a common way to break a
+# working ComfyUI install, so we do not.
