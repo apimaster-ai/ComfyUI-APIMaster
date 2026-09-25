@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-apimaster"
 description = "ComfyUI nodes for image and video generation through APIMaster and other OpenAI-compatible gateways. No extra Python dependencies."
-version = "0.1.0"
+version = "0.1.1"
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.9"

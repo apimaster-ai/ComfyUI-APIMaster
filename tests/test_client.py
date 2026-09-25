@@ -107,8 +107,56 @@ class KeyResolutionTest(unittest.TestCase):
         os.environ["APIMASTER_API_KEY"] = "from-env"
         try:
             self.assertEqual(resolve_api_key(""), "from-env")
+            self.assertEqual(resolve_api_key("", "https://apimaster.ai/v1"), "from-env")
         finally:
             del os.environ["APIMASTER_API_KEY"]
+
+    def test_a_stored_key_is_never_sent_to_a_base_url_from_the_workflow(self):
+        # base_url is a node input: a shared workflow could point it at someone's server.
+        os.environ["APIMASTER_API_KEY"] = "from-env"
+        try:
+            for url in ("https://evil.example/v1", "https://apimaster.ai.evil.example/v1",
+                        "http://apimaster.ai/v1", "http://127.0.0.1:8787/v1"):
+                self.assertEqual(resolve_api_key("", url), "", url)
+            self.assertEqual(resolve_api_key("typed-key", "https://evil.example/v1"), "typed-key")
+        finally:
+            del os.environ["APIMASTER_API_KEY"]
+
+    def test_an_openai_key_is_not_picked_up(self):
+        os.environ["OPENAI_API_KEY"] = "sk-openai"
+        home = os.environ.get("HOME"), os.environ.get("USERPROFILE")
+        os.environ["HOME"] = os.environ["USERPROFILE"] = os.path.dirname(os.path.abspath(__file__))
+        try:
+            self.assertEqual(resolve_api_key(""), "")
+        finally:
+            del os.environ["OPENAI_API_KEY"]
+            for name, value in zip(("HOME", "USERPROFILE"), home):
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+
+
+class OutputPathTest(unittest.TestCase):
+    """filename_prefix and model_override are workflow inputs, reachable through /prompt."""
+
+    def test_traversal_is_stripped_from_every_component(self):
+        from apimaster.nodes import _safe_part
+
+        self.assertEqual(_safe_part("../../etc/cron.d/x", "f"), "x")
+        self.assertEqual(_safe_part("..\\..\\Windows\\evil", "f"), "evil")
+        self.assertEqual(_safe_part("..", "fallback"), "fallback")
+        self.assertEqual(_safe_part("my clip:v2", "f"), "my_clip_v2")
+
+    def test_paths_outside_the_output_folder_are_refused(self):
+        import tempfile
+
+        from apimaster.nodes import _output_path
+
+        with tempfile.TemporaryDirectory() as root:
+            self.assertTrue(_output_path(root, "a.mp4").startswith(os.path.realpath(root)))
+            with self.assertRaises(APIMasterError):
+                _output_path(root, "../escape.mp4")
 
 
 class TensorHelpersTest(unittest.TestCase):

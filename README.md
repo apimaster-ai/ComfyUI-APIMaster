@@ -96,6 +96,11 @@ The nodes are not hardcoded to APIMaster. Point `base_url` at any OpenAI-compati
 endpoint that implements `/images/generations`, and use the `model_override` field for a
 model id that is not in the dropdown.
 
+For any `base_url` other than `https://apimaster.ai`, paste that endpoint's key into the
+config node. `APIMASTER_API_KEY` and `~/.apimaster/config.json` are only ever sent to
+apimaster.ai: `base_url` is part of the workflow, so a workflow someone shares with you
+could otherwise point it at their own server and receive your key.
+
 ## Development
 
 ```bash

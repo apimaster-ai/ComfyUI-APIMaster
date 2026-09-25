@@ -48,18 +48,30 @@ class APIMasterError(RuntimeError):
         self.status = status
 
 
-def resolve_api_key(explicit: str = "") -> str:
+def uses_default_host(base_url: str) -> bool:
+    """True for https://apimaster.ai (or a subdomain), the only place a stored key may go."""
+    parsed = urllib.parse.urlparse(base_url.strip())
+    host = (parsed.hostname or "").lower()
+    return parsed.scheme == "https" and (host == "apimaster.ai" or host.endswith(".apimaster.ai"))
+
+
+def resolve_api_key(explicit: str = "", base_url: str = DEFAULT_BASE_URL) -> str:
     """Key lookup order: node field, environment, then ~/.apimaster/config.json.
 
     Workflow JSON gets shared, posted in issues and uploaded to civitai. Leaving the key
     field empty and using the environment is the safe path, so it is the documented one.
+
+    A stored key (environment or config file) is only released for https://apimaster.ai.
+    base_url is a node input, so anyone who hands you a workflow chooses it; without this
+    check, a workflow pointing at their server would collect your key.
     """
     if explicit and explicit.strip():
         return explicit.strip()
-    for name in ("APIMASTER_API_KEY", "OPENAI_API_KEY"):
-        value = os.environ.get(name)
-        if value:
-            return value.strip()
+    if not uses_default_host(base_url):
+        return ""
+    value = os.environ.get("APIMASTER_API_KEY")
+    if value:
+        return value.strip()
     config_path = os.path.join(os.path.expanduser("~"), ".apimaster", "config.json")
     try:
         with open(config_path, "r", encoding="utf-8") as handle:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import Any, Dict, List, Tuple
 
@@ -15,6 +16,7 @@ from .client import (
     resolve_api_key,
     stack_tensors,
     tensor_to_data_uri,
+    uses_default_host,
 )
 
 CATEGORY = "APIMaster"
@@ -76,8 +78,14 @@ class APIMasterConfig:
     DESCRIPTION = "APIMaster endpoint and credentials. Prefer the APIMASTER_API_KEY environment variable over typing a key here."
 
     def build(self, base_url: str, api_key: str = ""):
-        key = resolve_api_key(api_key)
+        key = resolve_api_key(api_key, base_url)
         if not key:
+            if not uses_default_host(base_url):
+                raise APIMasterError(
+                    None,
+                    "APIMASTER_API_KEY and ~/.apimaster/config.json are only sent to "
+                    "https://apimaster.ai. For another endpoint, paste that endpoint's key into this node.",
+                )
             raise APIMasterError(
                 None,
                 "No API key found. Set APIMASTER_API_KEY before starting ComfyUI, "
@@ -249,6 +257,23 @@ def _output_dir() -> str:
         return path
 
 
+_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _safe_part(text: str, fallback: str) -> str:
+    """One filename component. Inputs come from the workflow, so '../' must not survive."""
+    cleaned = _UNSAFE.sub("_", os.path.basename(str(text).replace("\\", "/"))).strip("._")
+    return cleaned[:80] or fallback
+
+
+def _output_path(directory: str, filename: str) -> str:
+    path = os.path.realpath(os.path.join(directory, filename))
+    root = os.path.realpath(directory)
+    if os.path.commonpath([root, path]) != root:
+        raise APIMasterError(None, f"Refusing to write outside the output folder: {filename}")
+    return path
+
+
 class APIMasterVideo:
     """Text-to-video and image-to-video. Saves an MP4 into ComfyUI's output folder."""
 
@@ -317,8 +342,10 @@ class APIMasterVideo:
         data = client.download(content_url, timeout=600)
 
         directory = _output_dir()
-        filename = f"{filename_prefix}_{chosen}_{task_id[-8:]}.mp4"
-        path = os.path.join(directory, filename)
+        filename = "_".join(
+            [_safe_part(filename_prefix, "apimaster"), _safe_part(chosen, "video"), _safe_part(task_id[-8:], "task")]
+        ) + ".mp4"
+        path = _output_path(directory, filename)
         with open(path, "wb") as handle:
             handle.write(data)
         print(f"[APIMaster] saved {path} ({len(data) / 1e6:.1f} MB) in {time.time() - started:.0f}s")
