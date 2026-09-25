@@ -1,0 +1,3 @@
+# Not needed at runtime: kept out of the package ComfyUI users install.
+tests/
+.github/
