@@ -14,7 +14,7 @@ your environment.
 | `APIMaster Config` | Endpoint + key, passed to the other nodes |
 | `APIMaster Text to Image` | `gpt-image-2`, `doubao-seedream-5-0-pro-260628`, `gemini-3.1-flash-image`, Midjourney → `IMAGE` |
 | `APIMaster Image to Image` | Reference images (and an optional mask) → `IMAGE` |
-| `APIMaster Video` | `sora-2`, `sora-2-pro`, `seedance`, `kling` → an MP4 in your output folder |
+| `APIMaster Video` | `seedance`, `kling`, `MiniMax-H3`, `grok-imagine-video` → an MP4 in your output folder |
 | `APIMaster List Models` | Prints what the endpoint actually serves right now |
 
 ## Install
@@ -60,7 +60,7 @@ The key is also read from `~/.apimaster/config.json` if you use the
 Drag either file from [`example_workflows/`](example_workflows/) onto the ComfyUI canvas:
 
 - `text_to_image.json` — prompt → `gpt-image-2` → preview
-- `image_to_video.json` — load an image → `sora-2` → MP4
+- `image_to_video.json` — load an image → `seedance-2.5` → MP4
 
 ## Notes that will save you time
 
@@ -72,8 +72,9 @@ For `2k` and especially `4k` it can exceed the gateway's own timeout and come ba
 reference image with no aspect set is treated as 16:9 by the gateway, and you get a
 letterboxed result.
 
-**Resolution per video model.** `sora-2` serves 720p only; `1024p` and `1080p` need
-`sora-2-pro`. The node corrects this for you and logs when it does.
+**Video is slow.** `seedance-2.5` took about 15 minutes for a 4-second clip. The node
+waits up to 30 minutes and keeps polling through brief network drops; `720p` is the safe
+resolution, higher tiers depend on the model.
 
 **Advanced image parameters change the price.** Quality, background and output-format
 options narrow which upstream channels can serve a request, which can route you to a

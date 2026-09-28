@@ -41,7 +41,7 @@ class ClientTest(unittest.TestCase):
     def test_lists_models(self):
         ids = self.client().list_models()
         self.assertIn("gpt-image-2", ids)
-        self.assertIn("sora-2", ids)
+        self.assertIn("seedance-2.5", ids)
 
     def test_rejects_a_bad_key_with_a_useful_message(self):
         bad = APIMasterClient("x", self.base)
@@ -69,7 +69,7 @@ class ClientTest(unittest.TestCase):
 
     def test_video_submit_and_poll(self):
         client = self.client()
-        task_id = client.submit_video({"model": "sora-2", "prompt": "a waterfall", "duration": 4})
+        task_id = client.submit_video({"model": "seedance-2.5", "prompt": "a waterfall", "duration": 4})
         self.assertEqual(task_id, "task_mock")
         # The client sleeps before its first poll; keep the test honest but quick by
         # checking the polling contract rather than the wall-clock behaviour.
@@ -157,6 +157,79 @@ class OutputPathTest(unittest.TestCase):
             self.assertTrue(_output_path(root, "a.mp4").startswith(os.path.realpath(root)))
             with self.assertRaises(APIMasterError):
                 _output_path(root, "../escape.mp4")
+
+
+class PollingAndDownloadTest(unittest.TestCase):
+    def test_key_goes_only_to_the_exact_gateway_host(self):
+        import apimaster.client as client_module
+
+        sent = {}
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b"x"
+
+        def fake_urlopen(request, timeout=0):
+            sent[request.full_url] = request.get_header("Authorization")
+            return FakeResponse()
+
+        original = client_module.urllib.request.urlopen
+        client_module.urllib.request.urlopen = fake_urlopen
+        try:
+            c = APIMasterClient("test-key-1234567890", "https://apimaster.ai/v1")
+            c.download("https://apimaster.ai/imgs/a.png")
+            c.download("https://master.ai/steal.png")  # a substring of the gateway host
+            c.download("https://cdn.example.com/v.mp4")
+        finally:
+            client_module.urllib.request.urlopen = original
+        self.assertEqual(sent["https://apimaster.ai/imgs/a.png"], "Bearer test-key-1234567890")
+        self.assertIsNone(sent["https://master.ai/steal.png"])
+        self.assertIsNone(sent["https://cdn.example.com/v.mp4"])
+
+    def test_polling_survives_network_drops_and_5xx(self):
+        import apimaster.client as client_module
+
+        script = [
+            APIMasterError(None, "Cannot reach: timed out"),
+            APIMasterError(502, "bad gateway"),
+            {"status": "in_progress"},
+            {"status": "completed", "id": "t"},
+        ]
+
+        def fake_request(url, api_key, **kwargs):
+            step = script.pop(0)
+            if isinstance(step, Exception):
+                raise step
+            return step
+
+        original_request, original_sleep = client_module._request, client_module.time.sleep
+        client_module._request, client_module.time.sleep = fake_request, lambda _s: None
+        try:
+            result = APIMasterClient("test-key-1234567890", "https://apimaster.ai/v1").wait_for_video("t")
+        finally:
+            client_module._request, client_module.time.sleep = original_request, original_sleep
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(script, [])
+
+    def test_a_4xx_while_polling_still_fails(self):
+        import apimaster.client as client_module
+
+        def fake_request(url, api_key, **kwargs):
+            raise APIMasterError(404, "no such task")
+
+        original_request, original_sleep = client_module._request, client_module.time.sleep
+        client_module._request, client_module.time.sleep = fake_request, lambda _s: None
+        try:
+            with self.assertRaises(APIMasterError):
+                APIMasterClient("test-key-1234567890", "https://apimaster.ai/v1").wait_for_video("t")
+        finally:
+            client_module._request, client_module.time.sleep = original_request, original_sleep
 
 
 class TensorHelpersTest(unittest.TestCase):

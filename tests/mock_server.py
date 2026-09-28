@@ -50,7 +50,7 @@ class Handler(BaseHTTPRequestHandler):
                     "object": "list",
                     "data": [
                         {"id": "gpt-image-2", "object": "model"},
-                        {"id": "sora-2", "object": "model"},
+                        {"id": "seedance-2.5", "object": "model"},
                         {"id": "gpt-5.5", "object": "model"},
                     ],
                 },

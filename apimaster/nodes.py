@@ -42,7 +42,7 @@ SIZES = [
 
 # Verified against GET /v1/models on 2026-09-22. Ids are case-sensitive.
 IMAGE_MODELS = ["gpt-image-2", "doubao-seedream-5-0-pro-260628", "gemini-3.1-flash-image", "midjourney-v8.2", "midjourney-niji-7"]
-VIDEO_MODELS = ["sora-2", "sora-2-pro", "seedance-2.5", "seedance-2.0", "kling-v3-motion-control", "kling-v3-omni", "MiniMax-H3", "grok-imagine-video-1.5"]
+VIDEO_MODELS = ["seedance-2.5", "seedance-2.0", "kling-v3-motion-control", "kling-v3-omni", "MiniMax-H3", "grok-imagine-video-1.5"]
 
 
 def _progress(label: str):
@@ -283,7 +283,7 @@ class APIMasterVideo:
             "required": {
                 "config": ("APIMASTER_CONFIG",),
                 "prompt": ("STRING", {"default": "a waterfall forming a rainbow, cinematic", "multiline": True}),
-                "model": (VIDEO_MODELS, {"default": "sora-2"}),
+                "model": (VIDEO_MODELS, {"default": "seedance-2.5"}),
                 "duration": ("INT", {"default": 4, "min": 4, "max": 20, "step": 4}),
                 "resolution": (["720p", "1024p", "1080p"], {"default": "720p"}),
                 "aspect_ratio": (["16:9", "9:16"], {"default": "16:9"}),
@@ -319,10 +319,6 @@ class APIMasterVideo:
     ):
         client = APIMasterClient(config["api_key"], config["base_url"])
         chosen = model_override.strip() or model
-
-        if chosen == "sora-2" and resolution != "720p":
-            print("[APIMaster] sora-2 only serves 720p — falling back. Use sora-2-pro for 1024p/1080p.")
-            resolution = "720p"
 
         payload: Dict[str, Any] = {
             "model": chosen,

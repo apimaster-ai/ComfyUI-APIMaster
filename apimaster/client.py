@@ -172,8 +172,12 @@ class APIMasterClient:
         time.sleep(12)
         query = urllib.parse.urlencode({"model": model}) if model else ""
         url = f"{self.base_url}/tasks/{urllib.parse.quote(task_id)}" + (f"?{query}" if query else "")
+        failures = [0]
         for attempt in range(200):
-            data = _request(url, self.api_key, timeout=30) or {}
+            data = self._poll_once(url, failures)
+            if data is None:
+                time.sleep(4)
+                continue
             payload = data.get("data", data)
             status = payload.get("status")
             if on_progress:
@@ -202,12 +206,37 @@ class APIMasterClient:
             raise APIMasterError(None, f"No task id in response: {json.dumps(data)[:300]}")
         return task_id
 
+    def _poll_once(self, url: str, failures: List[int]) -> Optional[Dict[str, Any]]:
+        """One status poll. A dropped connection or a 5xx returns None: the job keeps running
+        server-side and is already paid for, so a network blip must not abandon it. Five in a
+        row, or any 4xx, raise."""
+        try:
+            data = _request(url, self.api_key, timeout=30) or {}
+        except APIMasterError as exc:
+            if exc.status is not None and exc.status < 500:
+                raise
+            failures[0] += 1
+            if failures[0] >= 5:
+                raise
+            return None
+        except (TimeoutError, ConnectionError, OSError) as exc:
+            failures[0] += 1
+            if failures[0] >= 5:
+                raise APIMasterError(None, f"Lost contact with the gateway while polling: {exc}") from None
+            return None
+        failures[0] = 0
+        return data
+
     def wait_for_video(self, task_id: str, on_progress=None) -> Dict[str, Any]:
+        # Video is slow: seedance-2.5 took about 15 minutes for 4 seconds. Wait up to ~30.
         time.sleep(15)
-        for attempt in range(240):
-            data = _request(
-                f"{self.base_url}/videos/{urllib.parse.quote(task_id)}", self.api_key, timeout=30
-            ) or {}
+        failures = [0]
+        url = f"{self.base_url}/videos/{urllib.parse.quote(task_id)}"
+        for attempt in range(435):
+            data = self._poll_once(url, failures)
+            if data is None:
+                time.sleep(4)
+                continue
             status = data.get("status")
             if on_progress:
                 on_progress(status, attempt)
@@ -216,12 +245,15 @@ class APIMasterClient:
             if status in ("failed", "error", "cancelled"):
                 raise APIMasterError(None, f"Task {status}: {json.dumps(data)[:300]}")
             time.sleep(4)
-        raise APIMasterError(None, "Gave up polling the video task after ~16 minutes.")
+        raise APIMasterError(
+            None, f"Gave up after ~30 minutes. The job is not lost: GET {self.base_url}/videos/{task_id}"
+        )
 
     def download(self, url: str, timeout: int = 300) -> bytes:
         request = urllib.request.Request(url)
         # Only our own domain needs the bearer token; upstream CDNs reject unknown headers.
-        if urllib.parse.urlparse(url).netloc in urllib.parse.urlparse(self.base_url).netloc:
+        # Exact host match: a substring test would also hand the key to e.g. "master.ai".
+        if urllib.parse.urlparse(url).netloc == urllib.parse.urlparse(self.base_url).netloc:
             request.add_header("Authorization", f"Bearer {self.api_key}")
         request.add_header("User-Agent", USER_AGENT)
         try:
