@@ -39,7 +39,7 @@
       ],
       "properties": { "Node name for S&R": "APIMasterTextToImage" },
       "widgets_values": [
-        "a corgi astronaut standing on the moon, cinematic lighting, 35mm",
+        "a corgi astronaut standing on the moon in a plain white spacesuit with no logos, cinematic lighting, 35mm",
         "gpt-image-2",
         "16:9",
         "1k",

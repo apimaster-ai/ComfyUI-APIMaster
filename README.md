@@ -3,6 +3,8 @@
 Image and video generation nodes for ComfyUI, backed by [APIMaster](https://apimaster.ai/docs)
 or any other OpenAI-compatible gateway.
 
+![The bundled text-to-image workflow after a run: APIMaster Config, APIMaster Text to Image and a preview of the generated image](assets/screenshot.png)
+
 **No extra Python dependencies.** The nodes use the standard library plus the
 `torch` / `numpy` / `Pillow` that ComfyUI already ships, so installing them cannot break
 your environment.
