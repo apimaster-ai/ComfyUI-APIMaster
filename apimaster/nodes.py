@@ -83,7 +83,7 @@ class APIMasterConfig:
             if not uses_default_host(base_url):
                 raise APIMasterError(
                     None,
-                    "APIMASTER_API_KEY and ~/.apimaster/config.json are only sent to "
+                    "APIMASTER_API_KEY is only sent to "
                     "https://apimaster.ai. For another endpoint, paste that endpoint's key into this node.",
                 )
             raise APIMasterError(

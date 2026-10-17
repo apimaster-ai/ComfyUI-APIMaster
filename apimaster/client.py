@@ -56,12 +56,15 @@ def uses_default_host(base_url: str) -> bool:
 
 
 def resolve_api_key(explicit: str = "", base_url: str = DEFAULT_BASE_URL) -> str:
-    """Key lookup order: node field, environment, then ~/.apimaster/config.json.
+    """Key lookup order: node field, then the APIMASTER_API_KEY environment variable.
 
     Workflow JSON gets shared, posted in issues and uploaded to civitai. Leaving the key
     field empty and using the environment is the safe path, so it is the documented one.
 
-    A stored key (environment or config file) is only released for https://apimaster.ai.
+    The node reads no files outside ComfyUI for this (the Comfy Registry policy forbids
+    it), so a key saved by apimaster-cli in its config file is not picked up.
+
+    The environment key is only released for https://apimaster.ai.
     base_url is a node input, so anyone who hands you a workflow chooses it; without this
     check, a workflow pointing at their server would collect your key.
     """
@@ -69,15 +72,7 @@ def resolve_api_key(explicit: str = "", base_url: str = DEFAULT_BASE_URL) -> str
         return explicit.strip()
     if not uses_default_host(base_url):
         return ""
-    value = os.environ.get("APIMASTER_API_KEY")
-    if value:
-        return value.strip()
-    config_path = os.path.join(os.path.expanduser("~"), ".apimaster", "config.json")
-    try:
-        with open(config_path, "r", encoding="utf-8") as handle:
-            return str(json.load(handle).get("key", "")).strip()
-    except (OSError, ValueError):
-        return ""
+    return (os.environ.get("APIMASTER_API_KEY") or "").strip()
 
 
 def _request(

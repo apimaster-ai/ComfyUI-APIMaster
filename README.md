@@ -52,8 +52,10 @@ Then leave the `api_key` field in the Config node empty.
 > generated images, published on model sites. Keys leak that way constantly. The node
 > prints a warning if you fill the field in anyway.
 
-The key is also read from `~/.apimaster/config.json` if you use the
-[`apimaster-cli`](https://github.com/apimaster-ai/apimaster-cli).
+The node does not read `~/.apimaster/config.json` (the file
+[`apimaster-cli`](https://github.com/apimaster-ai/apimaster-cli) saves its key in): custom
+nodes on the Comfy Registry may not read files outside ComfyUI. Set the environment
+variable instead. Versions up to 0.1.3 did read that file.
 
 ## Example workflows
 
@@ -100,7 +102,7 @@ endpoint that implements `/images/generations`, and use the `model_override` fie
 model id that is not in the dropdown.
 
 For any `base_url` other than `https://apimaster.ai`, paste that endpoint's key into the
-config node. `APIMASTER_API_KEY` and `~/.apimaster/config.json` are only ever sent to
+config node. `APIMASTER_API_KEY` is only ever sent to
 apimaster.ai: `base_url` is part of the workflow, so a workflow someone shares with you
 could otherwise point it at their own server and receive your key.
 

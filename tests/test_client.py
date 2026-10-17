@@ -6,6 +6,7 @@ Tensor helpers that need torch are skipped when torch is not installed.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import unittest
@@ -135,6 +136,26 @@ class KeyResolutionTest(unittest.TestCase):
                     os.environ.pop(name, None)
                 else:
                     os.environ[name] = value
+
+
+    def test_a_config_file_in_the_home_directory_is_not_read(self):
+        # Comfy Registry policy: no file reads outside ComfyUI. apimaster-cli's file is ignored.
+        import tempfile
+
+        home = os.environ.get("HOME"), os.environ.get("USERPROFILE")
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, ".apimaster"))
+            with open(os.path.join(tmp, ".apimaster", "config.json"), "w", encoding="utf-8") as handle:
+                json.dump({"key": "from-file"}, handle)
+            os.environ["HOME"] = os.environ["USERPROFILE"] = tmp
+            try:
+                self.assertEqual(resolve_api_key(""), "")
+            finally:
+                for name, value in zip(("HOME", "USERPROFILE"), home):
+                    if value is None:
+                        os.environ.pop(name, None)
+                    else:
+                        os.environ[name] = value
 
 
 class OutputPathTest(unittest.TestCase):
