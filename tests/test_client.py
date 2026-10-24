@@ -37,7 +37,7 @@ class ClientTest(unittest.TestCase):
     def test_requires_a_key(self):
         with self.assertRaises(APIMasterError) as ctx:
             APIMasterClient("", self.base)
-        self.assertIn("APIMASTER_API_KEY", str(ctx.exception))
+        self.assertIn("api_key field", str(ctx.exception))
 
     def test_lists_models(self):
         ids = self.client().list_models()
@@ -97,29 +97,14 @@ class ClientTest(unittest.TestCase):
 
 
 class KeyResolutionTest(unittest.TestCase):
-    def test_explicit_key_wins(self):
-        os.environ["APIMASTER_API_KEY"] = "from-env"
-        try:
-            self.assertEqual(resolve_api_key("  explicit  "), "explicit")
-        finally:
-            del os.environ["APIMASTER_API_KEY"]
+    def test_the_field_is_trimmed(self):
+        self.assertEqual(resolve_api_key("  explicit  "), "explicit")
 
-    def test_environment_is_used_when_the_field_is_empty(self):
+    def test_the_environment_is_not_read(self):
+        # Comfy Registry policy flags environment reads as credential access (0.1.4).
         os.environ["APIMASTER_API_KEY"] = "from-env"
         try:
-            self.assertEqual(resolve_api_key(""), "from-env")
-            self.assertEqual(resolve_api_key("", "https://apimaster.ai/v1"), "from-env")
-        finally:
-            del os.environ["APIMASTER_API_KEY"]
-
-    def test_a_stored_key_is_never_sent_to_a_base_url_from_the_workflow(self):
-        # base_url is a node input: a shared workflow could point it at someone's server.
-        os.environ["APIMASTER_API_KEY"] = "from-env"
-        try:
-            for url in ("https://evil.example/v1", "https://apimaster.ai.evil.example/v1",
-                        "http://apimaster.ai/v1", "http://127.0.0.1:8787/v1"):
-                self.assertEqual(resolve_api_key("", url), "", url)
-            self.assertEqual(resolve_api_key("typed-key", "https://evil.example/v1"), "typed-key")
+            self.assertEqual(resolve_api_key(""), "")
         finally:
             del os.environ["APIMASTER_API_KEY"]
 

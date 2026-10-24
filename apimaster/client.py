@@ -10,7 +10,6 @@ from __future__ import annotations
 import base64
 import io
 import json
-import os
 import time
 import urllib.error
 import urllib.parse
@@ -18,7 +17,7 @@ import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_BASE_URL = "https://apimaster.ai/v1"
-USER_AGENT = "ComfyUI-APIMaster/0.1.0"
+USER_AGENT = "ComfyUI-APIMaster/0.1.5"
 
 # Documented client-side read timeouts per resolution tier. Generation is slow and the
 # default urllib timeout would abort a perfectly healthy 4k job.
@@ -48,31 +47,14 @@ class APIMasterError(RuntimeError):
         self.status = status
 
 
-def uses_default_host(base_url: str) -> bool:
-    """True for https://apimaster.ai (or a subdomain), the only place a stored key may go."""
-    parsed = urllib.parse.urlparse(base_url.strip())
-    host = (parsed.hostname or "").lower()
-    return parsed.scheme == "https" and (host == "apimaster.ai" or host.endswith(".apimaster.ai"))
+def resolve_api_key(explicit: str = "") -> str:
+    """The key comes only from the Config node's `api_key` field.
 
-
-def resolve_api_key(explicit: str = "", base_url: str = DEFAULT_BASE_URL) -> str:
-    """Key lookup order: node field, then the APIMASTER_API_KEY environment variable.
-
-    Workflow JSON gets shared, posted in issues and uploaded to civitai. Leaving the key
-    field empty and using the environment is the safe path, so it is the documented one.
-
-    The node reads no files outside ComfyUI for this (the Comfy Registry policy forbids
-    it), so a key saved by apimaster-cli in its config file is not picked up.
-
-    The environment key is only released for https://apimaster.ai.
-    base_url is a node input, so anyone who hands you a workflow chooses it; without this
-    check, a workflow pointing at their server would collect your key.
+    The node reads no environment variables and no files outside ComfyUI for this (Comfy
+    Registry policy), so neither APIMASTER_API_KEY nor a key saved by apimaster-cli is
+    picked up. Versions up to 0.1.4 did read them.
     """
-    if explicit and explicit.strip():
-        return explicit.strip()
-    if not uses_default_host(base_url):
-        return ""
-    return (os.environ.get("APIMASTER_API_KEY") or "").strip()
+    return (explicit or "").strip()
 
 
 def _request(
@@ -106,8 +88,7 @@ class APIMasterClient:
         if not api_key:
             raise APIMasterError(
                 None,
-                "No API key. Set APIMASTER_API_KEY in your environment, or paste a key "
-                "into the APIMaster Config node.",
+                "No API key. Paste your key into the api_key field of the APIMaster Config node.",
             )
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")

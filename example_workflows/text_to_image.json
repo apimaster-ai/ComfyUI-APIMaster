@@ -67,7 +67,7 @@
   ],
   "groups": [
     {
-      "title": "APIMaster text to image — set APIMASTER_API_KEY before starting ComfyUI",
+      "title": "APIMaster text to image — paste your key into APIMaster Config",
       "bounding": [20, 40, 1360, 450],
       "color": "#3f789e",
       "font_size": 24,

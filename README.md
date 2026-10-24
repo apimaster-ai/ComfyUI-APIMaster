@@ -35,27 +35,17 @@ Restart ComfyUI.
 
 ## Set your key
 
-Set an environment variable **before** starting ComfyUI:
+Paste your key into the `api_key` field of the **APIMaster Config** node.
 
-```bash
-# macOS / Linux
-export APIMASTER_API_KEY=sk-...
+> **Clear it before you share.** Widget values are saved inside the workflow JSON, and
+> workflow JSON gets shared — posted in issues, embedded in generated PNGs, published on
+> model sites. Empty the `api_key` field before sharing a workflow or an image made with it.
 
-# Windows PowerShell
-$env:APIMASTER_API_KEY = "sk-..."
-```
-
-Then leave the `api_key` field in the Config node empty.
-
-> **Why not just type it into the node?** Because widget values are saved inside the
-> workflow JSON, and workflow JSON gets shared — posted in issues, uploaded with
-> generated images, published on model sites. Keys leak that way constantly. The node
-> prints a warning if you fill the field in anyway.
-
-The node does not read `~/.apimaster/config.json` (the file
-[`apimaster-cli`](https://github.com/apimaster-ai/apimaster-cli) saves its key in): custom
-nodes on the Comfy Registry may not read files outside ComfyUI. Set the environment
-variable instead. Versions up to 0.1.3 did read that file.
+The node reads the key from that field only. It does not read the `APIMASTER_API_KEY`
+environment variable or `~/.apimaster/config.json` (the file
+[`apimaster-cli`](https://github.com/apimaster-ai/apimaster-cli) saves its key in):
+custom nodes on the Comfy Registry may not read credentials from the environment or
+files outside ComfyUI. Versions up to 0.1.4 read the variable, and up to 0.1.3 the file.
 
 ## Example workflows
 
@@ -101,10 +91,9 @@ The nodes are not hardcoded to APIMaster. Point `base_url` at any OpenAI-compati
 endpoint that implements `/images/generations`, and use the `model_override` field for a
 model id that is not in the dropdown.
 
-For any `base_url` other than `https://apimaster.ai`, paste that endpoint's key into the
-config node. `APIMASTER_API_KEY` is only ever sent to
-apimaster.ai: `base_url` is part of the workflow, so a workflow someone shares with you
-could otherwise point it at their own server and receive your key.
+Paste that endpoint's key into the config node. When you load a workflow someone else
+shared, check its `base_url` before typing your key in: the key goes to whatever server
+that field names.
 
 ## Development
 
@@ -132,7 +121,7 @@ workflows validated against that live node registry.
 
 | Symptom | Cause |
 | --- | --- |
-| `HTTP 401` | Key has stray whitespace or quotes, or it was never set in the environment ComfyUI runs in |
+| `HTTP 401` | Key has stray whitespace or quotes, or the `api_key` field is empty |
 | `HTTP 404` | `base_url` is missing the `/v1` suffix |
 | `HTTP 400 ... use the Images API` | A chat model id was selected for an image node |
 | `HTTP 402` | Out of balance |

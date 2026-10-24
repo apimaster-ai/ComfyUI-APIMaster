@@ -16,7 +16,6 @@ from .client import (
     resolve_api_key,
     stack_tensors,
     tensor_to_data_uri,
-    uses_default_host,
 )
 
 CATEGORY = "APIMaster"
@@ -56,8 +55,8 @@ def _progress(label: str):
 class APIMasterConfig:
     """Endpoint + key, shared by the other nodes.
 
-    Leave `api_key` empty and set APIMASTER_API_KEY in the environment instead — a key
-    typed into this field is saved inside the workflow JSON, which people share.
+    The key typed into `api_key` is saved inside the workflow JSON, which people share.
+    Clear the field before sharing a workflow or an image that embeds its workflow.
     """
 
     @classmethod
@@ -75,27 +74,16 @@ class APIMasterConfig:
     RETURN_NAMES = ("config",)
     FUNCTION = "build"
     CATEGORY = CATEGORY
-    DESCRIPTION = "APIMaster endpoint and credentials. Prefer the APIMASTER_API_KEY environment variable over typing a key here."
+    DESCRIPTION = "APIMaster endpoint and API key. The key is saved in the workflow JSON: clear it before sharing the workflow."
 
     def build(self, base_url: str, api_key: str = ""):
-        key = resolve_api_key(api_key, base_url)
+        key = resolve_api_key(api_key)
         if not key:
-            if not uses_default_host(base_url):
-                raise APIMasterError(
-                    None,
-                    "APIMASTER_API_KEY is only sent to "
-                    "https://apimaster.ai. For another endpoint, paste that endpoint's key into this node.",
-                )
-            raise APIMasterError(
-                None,
-                "No API key found. Set APIMASTER_API_KEY before starting ComfyUI, "
-                "or paste a key into this node.",
-            )
-        if api_key.strip():
-            print(
-                "[APIMaster] Warning: the key is stored in this workflow's JSON. "
-                "Clear the field and use APIMASTER_API_KEY before sharing the workflow."
-            )
+            raise APIMasterError(None, "No API key. Paste your key into the api_key field of this node.")
+        print(
+            "[APIMaster] Note: the key is stored in this workflow's JSON. "
+            "Clear the api_key field before sharing the workflow or its images."
+        )
         return ({"api_key": key, "base_url": base_url.rstrip("/")},)
 
 
